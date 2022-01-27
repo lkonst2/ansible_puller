@@ -83,6 +83,7 @@ func init() {
 	pflag.String("http-pass", "", "HTTP password for pulling the remote file")
 
 	pflag.String("http-url", "", "Remote endpoint to retrieve the file from")
+	pflag.String("md5-url", "", "Remote endpoint to retrieve the file MD5 from")
 	pflag.String("s3-arn", "", "Remote object ARN in S3 to retrieve")
 	pflag.String("s3-conn-region", "", "AWS service endpoint region for S3")
 
@@ -145,6 +146,8 @@ func ansibleEnable() {
 
 func getAnsibleRepository(runDir string) error {
 	httpURL := viper.GetString("http-url")
+	md5URL := viper.GetString("md5-url")
+	fmt.Println(md5URL)
 	s3Obj := viper.GetString("s3-arn")
 	s3ConnectionRegion := viper.GetString("s3-conn-region")
 	localCacheFile := fmt.Sprintf("/tmp/%s.tgz", appName)
@@ -154,18 +157,25 @@ func getAnsibleRepository(runDir string) error {
 	if (httpURL == "") == (s3Obj == "") {
 		return errors.New("exactly one remote resource must be specified. Choose one 'http-url' or 's3-arn'")
 	} else if httpURL != "" {
+		if md5URL == "" {
+			md5URL = httpURL + ".md5"
+		}
 		remoteHttpURL := fmt.Sprintf("%s://%s", viper.GetString("http-proto"), httpURL)
+		remoteMd5URL := fmt.Sprintf("%s://%s", viper.GetString("http-proto"), md5URL)
 		downloader := httpDownloader{
 			username: viper.GetString("http-user"),
 			password: viper.GetString("http-pass"),
 		}
-		err = idempotentFileDownload(downloader, remoteHttpURL, localCacheFile)
+		err = idempotentFileDownload(downloader, remoteHttpURL, remoteMd5URL, localCacheFile)
 	} else if s3Obj != "" {
+		if md5URL == "" {
+			md5URL = s3Obj + ".md5"
+		}
 		downloader, createError := createS3Downloader(s3ConnectionRegion)
 		if createError != nil {
 			return errors.Wrap(err, "unable to pull Ansible repo")
 		}
-		err = idempotentFileDownload(downloader, s3Obj, localCacheFile)
+		err = idempotentFileDownload(downloader, s3Obj, md5URL, localCacheFile)
 	}
 	if err != nil {
 		return errors.Wrap(err, "unable to pull Ansible repo")

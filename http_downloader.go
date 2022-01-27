@@ -57,7 +57,7 @@ func (downloader httpDownloader) Download(remotePath, outputPath string) error {
 }
 
 func (downloader httpDownloader) RemoteChecksum(remotePath string) (string, error) {
-	hashRemotePath := fmt.Sprintf("%s.md5", remotePath)
+	hashRemotePath := remotePath
 
 	timeout := time.Duration(2 * time.Second)
 	client := http.Client{

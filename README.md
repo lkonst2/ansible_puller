@@ -66,6 +66,8 @@ Config file should be in: `/etc/ansible-puller/config.json`, `$HOME/.ansible-pul
 | `http-user`              | `""`                                  | Username for HTTP Basic Auth                                                            |
 | `http-pass`              | `""`                                  | Password for HTTP basic Auth                                                            |
 | `http-url`               | `""`                                  | HTTP Url to find the Ansible tarball. Required if s3-arn is not set                     |
+| `md5-url`                | `""`                                  | HTTP Url or S3 location to find the md5 file. If not set, .md5 will be added to Url or  |
+|                          |                                       | location                                                                                |
 | `log-dir`                | `"/var/log/ansible-puller"`           | Log directory (must exist)                                                              |
 | `ansible-dir`            | `""`                                  | Path in the pulled tarball to cd into before ansible commands - usually ansible.cfg dir |
 | `ansible-playbook`       | `"site.yml"`                          | The playbook that will be run  - relative to ansible-dir                                |

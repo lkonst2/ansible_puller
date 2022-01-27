@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"io/ioutil"
 	"net/http"
@@ -18,8 +19,9 @@ var (
 	testFilenameHash = "testfile.txt.md5"
 	testMD5          = "7b20fda6af27c1b59ebdd8c09a93e770"
 
-	testHashlessFilename = "nohash.txt"
-	testHashlessText     = []byte("Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.")
+	testHashlessFilename    = "nohash.txt"
+	testHashlessFilenameMd5 = "nohash.txt.md5"
+	testHashlessText        = []byte("Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.")
 
 	testBasicAuthChecksum     = []byte("bb651e9638be48e76bbbe936b9651083")
 	testBasicAuthFilename     = "basicauth.txt"
@@ -98,7 +100,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadWhenNoFileExists() {
 		username: "",
 		password: "",
 	}
-	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, testFilename)
+	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, s.testServer.URL+"/"+testFilenameHash, testFilename)
 	assert.Nil(s.T(), err)
 
 	text, err := ioutil.ReadFile(testFilename)
@@ -111,7 +113,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadWhenCurrentFileExists() 
 		username: "",
 		password: "",
 	}
-	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, testFilename)
+	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, s.testServer.URL+"/"+testFilenameHash, testFilename)
 	assert.Nil(s.T(), err)
 
 	text, err := ioutil.ReadFile(testFilename)
@@ -125,7 +127,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadWhenCurrentFileExists() 
 	modtime := finfo.ModTime()
 
 	// Idempotent Download
-	err = idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, testFilename)
+	err = idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, s.testServer.URL+"/"+testFilenameHash, testFilename)
 	assert.Nil(s.T(), err)
 
 	newFinfo, err := os.Stat(testFilename)
@@ -140,7 +142,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadWhenOldFileExists() {
 		username: "",
 		password: "",
 	}
-	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testHashlessFilename, testFilename)
+	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testHashlessFilename, s.testServer.URL+"/"+testHashlessFilenameMd5, testFilename)
 	assert.Nil(s.T(), err)
 
 	_, err = ioutil.ReadFile(testFilename)
@@ -156,7 +158,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadWhenOldFileExists() {
 	time.Sleep(1 * time.Second)
 
 	// Idempotent Download
-	err = idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, testFilename)
+	err = idempotentFileDownload(downloader, s.testServer.URL+"/"+testFilename, s.testServer.URL+"/"+testHashlessFilenameMd5, testFilename)
 	assert.Nil(s.T(), err)
 
 	newFinfo, err := os.Stat(testFilename)
@@ -171,7 +173,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadNoRemoteHash() {
 		username: "",
 		password: "",
 	}
-	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testHashlessFilename, testHashlessFilename)
+	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testHashlessFilename, s.testServer.URL+"/"+testHashlessFilenameMd5, testHashlessFilename)
 	assert.Nil(s.T(), err)
 
 	text, err := ioutil.ReadFile(testHashlessFilename)
@@ -188,7 +190,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadNoRemoteHash() {
 	time.Sleep(1 * time.Second)
 
 	// Idempotent Download
-	err = idempotentFileDownload(downloader, s.testServer.URL+"/"+testHashlessFilename, testHashlessFilename)
+	err = idempotentFileDownload(downloader, s.testServer.URL+"/"+testHashlessFilename, s.testServer.URL+"/"+testHashlessFilenameMd5, testHashlessFilename)
 	assert.Nil(s.T(), err)
 
 	newFinfo, err := os.Stat(testHashlessFilename)
@@ -203,7 +205,7 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadBasicAuth() {
 		username: testBasicAuthUser,
 		password: testBasicAuthPass,
 	}
-	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testBasicAuthFilename, testBasicAuthFilename)
+	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testBasicAuthFilename, s.testServer.URL+"/"+testFilenameHash, testBasicAuthFilename)
 	assert.Nil(s.T(), err)
 
 	text, err := ioutil.ReadFile(testBasicAuthFilename)
@@ -216,6 +218,6 @@ func (s *HttpDownloaderTestSuite) TestIdempotentDownloadBasicAuthFailure() {
 		username: "nottherightuser",
 		password: "nottherightpass",
 	}
-	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testBasicAuthFilename, testBasicAuthFilename)
+	err := idempotentFileDownload(downloader, s.testServer.URL+"/"+testBasicAuthFilename, s.testServer.URL+"/"+testFilenameHash, testBasicAuthFilename)
 	assert.NotNil(s.T(), err)
 }
